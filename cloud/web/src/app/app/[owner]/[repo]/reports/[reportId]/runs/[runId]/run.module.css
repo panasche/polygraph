@@ -1,0 +1,153 @@
+.title {
+  font-size: var(--t-30);
+  letter-spacing: -0.03em;
+}
+
+.testId {
+  margin-top: 0.3rem;
+  font-size: var(--t-12);
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1.5rem 3rem;
+  align-items: end;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.25rem;
+  margin: 0;
+  font-size: var(--t-14);
+}
+
+.facts dt {
+  color: var(--ink-muted);
+}
+
+.facts dd {
+  margin: 0.1rem 0 0;
+  font-weight: 500;
+}
+
+.replay {
+  display: grid;
+  gap: 0.4rem;
+  font-size: var(--t-14);
+}
+
+.verdict {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2rem 3rem;
+  padding: 1.75rem 0 0;
+  border-top: 2px solid var(--ink);
+}
+
+.verdictBad {
+  border-top-color: var(--crimson);
+}
+
+.answer h3 {
+  font-size: var(--t-16);
+  margin-bottom: 0.75rem;
+}
+
+.error {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.7rem;
+  border-radius: var(--r-sm);
+  background: var(--amber-wash);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.judgement {
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+}
+
+.verdictTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-size: var(--t-24);
+}
+
+.verdictTitle > span:last-child {
+  font-size: var(--t-24);
+  font-weight: 650;
+}
+
+.reasons {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.reasons li + li {
+  margin-top: 0.25rem;
+}
+
+.evidence {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0.75rem 0 0;
+  font-size: var(--t-14);
+}
+
+.evidence dt {
+  font-weight: 600;
+}
+
+.evidence dd {
+  margin: 0.2rem 0 0;
+}
+
+.rationale {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--ink-muted);
+}
+
+.checks {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checks li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+
+.checkMark {
+  flex: none;
+  min-width: 2.4rem;
+  font-size: var(--t-12);
+  font-weight: 700;
+}
+
+.pass .checkMark {
+  color: var(--green);
+}
+
+.fail .checkMark {
+  color: var(--crimson);
+}
+
+@media (max-width: 56rem) {
+  .verdict {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

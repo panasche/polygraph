@@ -1,0 +1,20 @@
+# Copy to terraform.tfvars (gitignored). Placeholders only; no secrets belong here.
+# Secrets go into Secrets Manager with infra/scripts/set-secrets.sh.
+
+allowed_account_ids = ["YOUR_AWS_ACCOUNT_ID"]
+
+zone_name   = "polygraphmcp.dev"
+site_domain = "polygraphmcp.dev"
+# site_alternative_names = ["www.polygraphmcp.dev"]
+
+alarm_emails = ["alerts@polygraphmcp.dev"]
+
+# AWS Budgets only accepts USD. Pick the USD figure that matches your rupee limit.
+monthly_budget_usd = 0
+
+# Let the production deploy role copy tested images out of staging
+# (value: `terraform output -json ecr_repository_arns` in envs/staging).
+promotion_source_ecr_repository_arns = [
+  "arn:aws:ecr:ap-south-1:YOUR_AWS_ACCOUNT_ID:repository/polygraph-staging/api",
+  "arn:aws:ecr:ap-south-1:YOUR_AWS_ACCOUNT_ID:repository/polygraph-staging/web",
+]

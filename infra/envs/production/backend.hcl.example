@@ -1,0 +1,4 @@
+# Copy to backend.hcl (gitignored) and run:
+#   terraform init -backend-config=backend.hcl
+# The bucket comes from `terraform output state_bucket` in infra/bootstrap.
+bucket = "polygraph-tfstate-YOUR_AWS_ACCOUNT_ID"

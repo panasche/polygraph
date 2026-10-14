@@ -1,0 +1,198 @@
+.ledger {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.head,
+.row {
+  display: grid;
+  grid-template-columns: 11rem repeat(3, minmax(0, 1fr));
+  gap: 0 1.25rem;
+}
+
+.head {
+  position: sticky;
+  top: 3.25rem;
+  z-index: 2;
+  padding: 0.6rem 0;
+  background: var(--paper);
+  border-bottom: 2px solid var(--ink);
+  font-weight: 650;
+}
+
+.colAsked {
+  color: var(--blue);
+}
+
+.colHappened {
+  color: var(--ink);
+}
+
+.colTold {
+  color: var(--ink-muted);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* The call that got the fault. Amber marks "something was done to this call",
+   crimson stays reserved for evidence of a bad outcome. */
+.rowFault {
+  background: var(--amber-wash);
+  box-shadow:
+    -0.75rem 0 0 var(--amber-wash),
+    0.75rem 0 0 var(--amber-wash),
+    inset 3px 0 0 var(--amber);
+  padding-left: 0.75rem;
+}
+
+.meta {
+  display: grid;
+  align-content: start;
+  gap: 0.3rem;
+  font-size: var(--t-14);
+}
+
+.seq {
+  font-size: var(--t-12);
+  color: var(--ink-faint);
+}
+
+.tool {
+  display: grid;
+}
+
+.tool code {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.server {
+  font-size: var(--t-12);
+  color: var(--ink-faint);
+}
+
+.faultTag {
+  justify-self: start;
+  padding: 0.05rem 0.4rem;
+  border-radius: var(--r-sm);
+  background: var(--amber);
+  color: var(--paper);
+  font-size: 0.72rem;
+}
+
+.latency {
+  font-size: var(--t-12);
+  color: var(--ink-faint);
+}
+
+.cell {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+}
+
+.cellLabel {
+  display: none;
+  font-size: var(--t-12);
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.fact {
+  font-size: var(--t-14);
+  font-weight: 600;
+}
+
+.factBad {
+  color: var(--crimson);
+}
+
+.note {
+  font-size: var(--t-14);
+  color: var(--ink-muted);
+}
+
+.errTag {
+  justify-self: start;
+  font-size: var(--t-12);
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.payload {
+  margin: 0;
+  padding: 0.6rem 0.7rem;
+  border-radius: var(--r-sm);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.hidden {
+  display: grid;
+  gap: 0.1rem;
+  font-size: var(--t-14);
+  color: var(--ink-muted);
+}
+
+.hash {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+
+.more summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.more summary::-webkit-details-marker {
+  display: none;
+}
+
+.more[open] summary {
+  display: none;
+}
+
+.moreLabel {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: var(--t-12);
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.footnote {
+  font-size: var(--t-14);
+  color: var(--ink-faint);
+}
+
+@media (max-width: 56rem) {
+  .head {
+    display: none;
+  }
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.85rem;
+  }
+  .meta {
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+  }
+  .cellLabel {
+    display: block;
+  }
+}

@@ -1,0 +1,19 @@
+# Copy to terraform.tfvars (gitignored). Placeholders only; no secrets belong here.
+# Secrets go into Secrets Manager with infra/scripts/set-secrets.sh.
+
+allowed_account_ids = ["YOUR_AWS_ACCOUNT_ID"]
+
+zone_name   = "polygraphmcp.dev"
+site_domain = "staging.polygraphmcp.dev"
+
+# Team alias for alarms, not a personal address.
+alarm_emails = ["alerts@polygraphmcp.dev"]
+
+# AWS Budgets only accepts USD. Pick the USD figure that matches your rupee limit.
+monthly_budget_usd = 0
+
+# After production exists: let the production deploy role pull images for promotion.
+# ecr_pull_principal_arns = ["arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/polygraph-production-github-deploy"]
+
+# Set to true only if bootstrap did NOT create the GitHub OIDC provider in this account.
+# create_github_oidc_provider = false

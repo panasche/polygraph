@@ -1,0 +1,49 @@
+.wrap {
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+  padding-top: clamp(3rem, 9vw, 6rem);
+  padding-bottom: clamp(3rem, 9vw, 6rem);
+}
+
+.card {
+  display: grid;
+  gap: 1.1rem;
+  width: 100%;
+  max-width: 30rem;
+  padding: 2rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  background: var(--paper-raised);
+}
+
+.title {
+  font-size: var(--t-30);
+  letter-spacing: -0.03em;
+}
+
+.lead {
+  color: var(--ink-muted);
+}
+
+.cta {
+  justify-self: start;
+}
+
+.small {
+  font-size: var(--t-12);
+  color: var(--ink-faint);
+}
+
+.error {
+  padding: 0.6rem 0.8rem;
+  border-left: 3px solid var(--amber);
+  background: var(--amber-wash);
+  font-size: var(--t-14);
+}
+
+.aside {
+  max-width: 30rem;
+  font-size: var(--t-14);
+  color: var(--ink-muted);
+}

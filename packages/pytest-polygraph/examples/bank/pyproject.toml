@@ -1,0 +1,20 @@
+# A runnable Polygraph example: the fake bank world and the two scripted agents.
+#   cd examples/bank && pytest --polygraph-auto --polygraph-report=polygraph.html
+[tool.pytest.ini_options]
+testpaths = ["."]
+addopts = "-p no:cacheprovider"
+
+[tool.polygraph]
+runs = 1
+seed = 20261013
+loop_threshold = 3
+timeout_s = 1          # keep "timeout" short so the example runs fast
+slow_ms = 300
+framework = "scripted"
+config_label = "example"
+
+[tool.polygraph.servers]
+bank = { command = ["python", "-m", "polygraph.worlds.bank"] }
+
+[tool.polygraph.faults.rate_limit]
+retry_after_s = 0.2

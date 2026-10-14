@@ -1,0 +1,146 @@
+name: Deploy environment
+
+# Reusable: deploys one image tag to one environment. Called by deploy.yml.
+# The job runs inside the GitHub Environment, so the OIDC subject is
+# repo:<owner>/<repo>:environment:<name>, the only subject the AWS deploy role
+# for that environment trusts. Production approvals are set on the
+# "production" Environment in the repository settings.
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: staging or production
+        type: string
+        required: true
+      image-tag:
+        description: Git SHA tag of the images
+        type: string
+        required: true
+      promote-from-api:
+        description: Source API repository to copy the image from (production promotion)
+        type: string
+        required: false
+        default: ""
+      promote-from-web:
+        description: Source web repository to copy the image from (production promotion)
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars.PUBLIC_BASE_URL }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_SERVICE_API: ${{ vars.ECS_SERVICE_API }}
+      ECS_SERVICE_WORKER: ${{ vars.ECS_SERVICE_WORKER }}
+      ECS_SERVICE_WEB: ${{ vars.ECS_SERVICE_WEB }}
+      API_IMAGE: ${{ vars.ECR_API_REPOSITORY }}:${{ inputs.image-tag }}
+      WEB_IMAGE: ${{ vars.ECR_WEB_REPOSITORY }}:${{ inputs.image-tag }}
+      PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
+      MIGRATION_COMMAND: ${{ vars.MIGRATION_COMMAND }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - name: Check environment variables
+        run: |
+          missing=0
+          for v in AWS_REGION ECS_CLUSTER ECS_SERVICE_API ECS_SERVICE_WORKER ECS_SERVICE_WEB PUBLIC_BASE_URL; do
+            if [[ -z "${!v}" ]]; then echo "::error::GitHub Environment variable $v is not set"; missing=1; fi
+          done
+          exit "$missing"
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gh-deploy-${{ inputs.environment }}-${{ github.run_id }}
+
+      - name: Log in to ECR
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+        with:
+          mask-password: "true"
+
+      - name: Promote tested images
+        if: inputs.promote-from-api != '' && inputs.promote-from-web != ''
+        env:
+          TAG: ${{ inputs.image-tag }}
+          SRC_API: ${{ inputs.promote-from-api }}
+          SRC_WEB: ${{ inputs.promote-from-web }}
+          DST_API: ${{ vars.ECR_API_REPOSITORY }}
+          DST_WEB: ${{ vars.ECR_WEB_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          login() {
+            local registry="${1%%/*}"
+            aws ecr get-login-password | skopeo login --username AWS --password-stdin "$registry" >/dev/null
+          }
+          copy() {
+            local src="$1" dst="$2" name="${2#*/}"
+            if aws ecr describe-images --repository-name "$name" --image-ids imageTag="$TAG" >/dev/null 2>&1; then
+              echo "$dst:$TAG already present"
+              return
+            fi
+            # Same digest in both registries: production runs exactly what staging tested.
+            skopeo copy --all --preserve-digests "docker://$src:$TAG" "docker://$dst:$TAG"
+            echo "copied $src:$TAG -> $dst:$TAG"
+          }
+          login "$SRC_API"; login "$DST_API"
+          copy "$SRC_API" "$DST_API"
+          copy "$SRC_WEB" "$DST_WEB"
+
+      - name: Images exist
+        run: |
+          set -euo pipefail
+          for ref in "$API_IMAGE" "$WEB_IMAGE"; do
+            repo="${ref%:*}"; tag="${ref##*:}"
+            aws ecr describe-images --repository-name "${repo#*/}" --image-ids imageTag="$tag" >/dev/null \
+              || { echo "::error::$ref not found in ECR"; exit 1; }
+          done
+
+      - name: Migrate and roll out
+        run: bash .github/scripts/ecs-deploy.sh
+
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          check() {
+            local path="$1" expect="$2"
+            for _ in $(seq 1 20); do
+              body="$(curl -fsS --max-time 10 -H 'Cache-Control: no-cache' "${PUBLIC_BASE_URL}${path}" 2>/dev/null)" && {
+                if [[ -z "$expect" || "$body" == *"$expect"* ]]; then
+                  echo "ok ${path}"
+                  return 0
+                fi
+              }
+              sleep 15
+            done
+            echo "::error::Smoke test failed for ${PUBLIC_BASE_URL}${path}"
+            return 1
+          }
+          check /api/health '"ok"'
+          check / ''
+
+      - name: Refresh CDN
+        if: vars.CLOUDFRONT_DISTRIBUTION_ID != ''
+        env:
+          DISTRIBUTION: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION" --paths "/*" \
+            --query 'Invalidation.Id' --output text

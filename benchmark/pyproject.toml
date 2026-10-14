@@ -1,0 +1,122 @@
+# polygraph-benchmark: the benchmark harness for Polygraph for MCP.
+#
+# Not published. Install it *editable* from this folder, one virtualenv per framework
+# (the frameworks pin different MCP SDK majors, so they cannot share one venv):
+#
+#   python -m venv .venvs/langgraph
+#   .venvs/langgraph/Scripts/python -m pip install -e ../packages/pytest-polygraph -e ".[langgraph,dev]"
+#
+# The editable install only adds this folder to sys.path (see [tool.hatch.build]),
+# so `adapters`, `recipes`, `judge`, `second_opinion` and `bench` import from here.
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "polygraph-benchmark"
+version = "0.1.0"
+description = "Benchmark harness for Polygraph for MCP: frameworks x faults x fix recipes, scored against real server state."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+authors = [{ name = "Polygraph contributors" }]
+classifiers = ["Private :: Do Not Upload"]
+dependencies = [
+  "pytest-polygraph",     # installed from ../packages/pytest-polygraph (editable)
+  "pytest>=8.0",
+  "httpx>=0.27",          # the LLM judge talks to the provider's HTTP API directly
+]
+
+[project.optional-dependencies]
+# Versions below are the ones checked against the worlds; see pins/ for what a run used.
+langgraph = [
+  "langgraph>=1.2.15",
+  "langchain>=1.4.5",               # create_agent (the LangGraph agent loop; replaces create_react_agent)
+  "langchain-mcp-adapters>=0.3.2",  # needs mcp<2 (speaks protocol 2025-11-25)
+  "langchain-openai>=1.7.2",
+  "langchain-anthropic>=1.7.6",
+]
+openai-agents = [
+  "openai-agents>=0.23.1",          # agents.mcp.MCPServerStdio / MCPServerStreamableHttp
+]
+pydantic-ai = [
+  "pydantic-ai-slim[mcp,openai,anthropic]>=2.56.0",   # pydantic_ai.mcp.MCPToolset (FastMCP client)
+]
+smolagents = [
+  "smolagents[mcp,openai]>=1.26.0", # smolagents.MCPClient (mcpadapt underneath)
+  "mcp>=1.24,<2",                   # mcpadapt 0.1.20 imports streamablehttp_client, gone in mcp 2.x
+]
+second-opinion = [
+  "agent-polygraph>=0.1.0",         # transcript-only lie check, used by second_opinion/
+]
+dev = [
+  "pytest-timeout>=2.3",
+  "ruff>=0.6",
+]
+
+[project.scripts]
+polygraph-bench = "bench.cli:main"
+
+[tool.hatch.build]
+# Editable installs put this folder on sys.path; nothing is packaged for PyPI.
+dev-mode-dirs = ["."]
+
+[tool.hatch.build.targets.wheel]
+bypass-selection = true
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+# --------------------------------------------------------------------------- #
+# pytest: the harness's own tests live in tests/, the benchmark tasks in tasks/.
+# `pytest -q` (no arguments) runs only tests/, fully offline.
+# --------------------------------------------------------------------------- #
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra -p no:cacheprovider"
+markers = [
+  "e2e: end-to-end dry runs that start the fake worlds and the proxy",
+]
+filterwarnings = [
+  "ignore::DeprecationWarning:langgraph.*",
+]
+
+# --------------------------------------------------------------------------- #
+# Polygraph: the three fake worlds, all started through the proxy over stdio.
+# run.py copies this table per (framework, config, model) cell and adds labels.
+# --------------------------------------------------------------------------- #
+[tool.polygraph]
+runs = 1
+seed = 20261014
+loop_threshold = 3
+timeout_s = 20          # how long the proxy holds a "timeout" call
+slow_ms = 4000
+judge = "rules"         # run.py --judge llm switches to "judge.llm_judge:claimed_success"
+framework = "unset"
+config_label = "default"
+
+[tool.polygraph.servers]
+bank = { command = ["python", "-m", "polygraph.worlds.bank"] }
+shop = { command = ["python", "-m", "polygraph.worlds.shop"] }
+inbox = { command = ["python", "-m", "polygraph.worlds.inbox"] }
+
+[tool.polygraph.faults.rate_limit]
+retry_after_s = 2
+
+[tool.polygraph.faults.description_poison]
+mode = "rug_pull"       # send_email turns poisoned after the first tool call
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv", ".venvs", "out"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "SIM"]
+ignore = ["S101", "S603", "S607"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S108", "S311"]
+"tasks/**" = ["S105", "S106"]

@@ -1,0 +1,72 @@
+name: Polygraph (fork PR comment)
+
+# Second half of the fork-PR pattern. Runs in the base repository's context
+# after "Polygraph" finishes on a fork PR, so it has a write token (and could
+# get an OIDC token). It NEVER checks out or runs the fork's code: it only
+# downloads the fork run's artifacts, validates them as data, and comments.
+
+on:
+  workflow_run:
+    workflows: [Polygraph]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  comment:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name != github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read # download the fork run's artifacts
+      pull-requests: write # comment on the PR
+    steps:
+      - name: Download fork results (data only)
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/fork
+
+      - name: Verify the PR number against the triggering commit
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          FILE: ${{ runner.temp }}/fork/polygraph-pr/pr-number.txt
+        run: |
+          set -euo pipefail
+          # The file came from untrusted code: accept only digits, then check
+          # with the API that this PR's head really is the commit that ran.
+          pr="$(head -c 16 "$FILE" | tr -dc '0-9')"
+          [[ -n "$pr" ]] || { echo "::error::No PR number in artifact"; exit 1; }
+          actual="$(gh api "repos/${REPO}/pulls/${pr}" --jq .head.sha)"
+          if [[ "$actual" != "$HEAD_SHA" ]]; then
+            echo "::error::PR #${pr} head is ${actual}, not ${HEAD_SHA}. Ignoring."
+            exit 1
+          fi
+          echo "number=$pr" >> "$GITHUB_OUTPUT"
+
+      # The action is used from the base repository at a trusted ref (never the fork).
+      - name: Check out the action only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: action
+          path: base
+
+      - name: Comment
+        uses: ./base/action
+        with:
+          python-version: "3.12"
+          install: pytest-polygraph
+          results: ${{ runner.temp }}/fork/polygraph-results/results.json
+          pr-number: ${{ steps.pr.outputs.number }}
+          compare-to: main
+          upload: "false"
+          comment: "true"
+          report-path: ${{ runner.temp }}/report

@@ -1,0 +1,34 @@
+# Caddy in front of Polygraph Cloud on one server.
+#
+# Caddy fetches and renews the HTTPS certificate for SITE_ADDRESS on its own
+# (Let's Encrypt, no email needed). Ports 80 and 443 must be open.
+#
+# No access log on purpose: it would record every visitor's IP address, which
+# is personal data under the DPDP Act and isn't needed to run the service.
+
+{
+	admin off
+}
+
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# The API takes uploads up to 10 MB; leave a little room for headers.
+	request_body {
+		max_size 11MB
+	}
+
+	# The browser talks to the API directly, not through the Next.js rewrite.
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

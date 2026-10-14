@@ -1,0 +1,106 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pytest-polygraph"
+dynamic = ["version"]
+description = "Polygraph for MCP: break your AI agent's tools inside pytest and catch it when it lies about what happened."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+authors = [{ name = "Polygraph contributors" }]
+keywords = ["mcp", "pytest", "agents", "llm", "chaos-engineering", "fault-injection", "testing"]
+classifiers = [
+  "Framework :: Pytest",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Testing",
+  "Typing :: Typed",
+]
+dependencies = [
+  "pydantic>=2.7,<3",   # results schema (shared with the cloud service)
+  "anyio>=4.4",         # proxy event loop (asyncio on Windows and Linux)
+  "httpx>=0.27",        # HTTP proxy upstream, test client, upload client
+  "uvicorn>=0.30",      # serves the HTTP proxy (a plain ASGI app, no framework needed)
+  "pytest>=8.0",        # the plugin itself
+]
+
+[project.optional-dependencies]
+otel = ["opentelemetry-sdk>=1.27", "opentelemetry-exporter-otlp>=1.27"]
+# The fake worlds ship in the main package and need nothing extra (stdlib sqlite3);
+# the extra is kept so `pip install pytest-polygraph[worlds]` keeps working.
+worlds = []
+dev = [
+  "pytest-cov>=5",
+  "pytest-xdist>=3.5",  # the plugin is tested under xdist
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "mcp>=2.3",           # interop tests against the official MCP SDK client
+]
+
+[project.scripts]
+polygraph = "polygraph.cli:main"
+
+[project.entry-points.pytest11]
+polygraph = "polygraph.plugin"
+
+[project.urls]
+Homepage = "https://polygraphmcp.dev"
+Source = "https://github.com/polygraph-dev/polygraph"
+Issues = "https://github.com/polygraph-dev/polygraph/issues"
+
+[tool.hatch.version]
+path = "src/polygraph/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/polygraph"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = ["integration: end-to-end tests that start world servers and proxies"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.format]
+# The frozen results contract is kept byte-for-byte as written.
+exclude = ["src/polygraph/results.py", "src/polygraph/metrics.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "SIM"]
+ignore = ["S101", "S603", "S607"]
+
+[tool.ruff.lint.per-file-ignores]
+# results.py and metrics.py are the frozen, shared contract: keep them byte-stable.
+"src/polygraph/results.py" = ["UP037", "UP042", "E501"]
+"src/polygraph/metrics.py" = ["E501"]
+"tests/**" = ["S105", "S106", "S108", "S110", "S311", "S314", "E501"]
+"examples/**" = ["S105", "S106"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = "src"
+packages = ["polygraph"]
+
+# The frozen results contract is not edited for typing nits.
+[[tool.mypy.overrides]]
+module = ["polygraph.results", "polygraph.metrics"]
+disable_error_code = ["arg-type", "no-untyped-def", "var-annotated"]
+
+[tool.coverage.run]
+source = ["polygraph"]
+# Subprocesses (proxy, worlds) are exercised end to end but not measured.
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError"]

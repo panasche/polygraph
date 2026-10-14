@@ -1,0 +1,86 @@
+name: Polygraph
+
+# Dogfood: run the package's example suite through our own GitHub Action.
+# - Same-repo PRs get a sticky comment from this job.
+# - Fork PRs only upload an artifact here; polygraph-fork.yml (workflow_run)
+#   posts the comment, because fork PRs get a read-only token and no OIDC.
+# - Pushes to main keep the artifact that later PRs compare against, and
+#   upload to Polygraph Cloud when the repo variable POLYGRAPH_UPLOAD is "true".
+
+on:
+  pull_request:
+    paths:
+      - packages/pytest-polygraph/**
+      - action/**
+      - .github/workflows/polygraph.yml
+  push:
+    branches: [main]
+    paths:
+      - packages/pytest-polygraph/**
+      - action/**
+      - .github/workflows/polygraph.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: polygraph-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  polygraph:
+    name: Polygraph example suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read # download the main-branch artifact to compare against
+      pull-requests: write # sticky comment (same-repo PRs)
+      id-token: write # tokenless upload on main
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Polygraph
+        id: polygraph
+        uses: ./action
+        with:
+          python-version: "3.12"
+          # pip runs in working-directory, so the package is two levels up.
+          install: -e ../..[worlds]
+          working-directory: packages/pytest-polygraph/examples/bank
+          runs: "3"
+          compare-to: main
+          upload: ${{ github.event_name == 'push' && vars.POLYGRAPH_UPLOAD == 'true' }}
+          # A self-hosted dashboard (docs/DEPLOY-FREE.md) sets these repo variables.
+          api-url: ${{ vars.POLYGRAPH_API_URL || 'https://polygraphmcp.dev/api' }}
+          audience: ${{ vars.POLYGRAPH_AUDIENCE }}
+          comment: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+          # The example agents are scripted to show every outcome, so only an
+          # ordinary test error fails this job.
+          fail-on: crash
+
+      - name: Save PR number for the fork comment workflow
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          mkdir -p "${RUNNER_TEMP}/pr"
+          printf '%s\n' "$PR_NUMBER" > "${RUNNER_TEMP}/pr/pr-number.txt"
+
+      - name: Upload PR number
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: polygraph-pr
+          path: ${{ runner.temp }}/pr/pr-number.txt
+          retention-days: 5
+
+      - name: Numbers
+        env:
+          SILENT_LIE: ${{ steps.polygraph.outputs.silent-lie-rate }}
+          COVERAGE: ${{ steps.polygraph.outputs.coverage }}
+          REPORT: ${{ steps.polygraph.outputs.report-url }}
+        run: echo "silent-lie=${SILENT_LIE:-n/a} coverage=${COVERAGE} report=${REPORT}"

@@ -1,0 +1,400 @@
+name: Polygraph for MCP
+description: Break your AI agent's MCP tools inside pytest, catch it lying, and post the numbers on the pull request.
+author: Polygraph contributors
+branding:
+  icon: check-circle
+  color: orange
+
+inputs:
+  python-version:
+    description: Python version for setup-python. Leave empty to use the Python already on the runner.
+    required: false
+    default: "3.12"
+  install:
+    description: Arguments for "pip install". Add your own project too, e.g. "pytest-polygraph -e .[test]".
+    required: false
+    default: pytest-polygraph
+  working-directory:
+    description: Directory to run pytest in.
+    required: false
+    default: "."
+  pytest-args:
+    description: Extra pytest arguments (test paths, -k, -m, ...).
+    required: false
+    default: ""
+  runs:
+    description: Repeats per (test, fault) pair.
+    required: false
+    default: "3"
+  auto:
+    description: Multiply tests across the planned tool x fault matrix (--polygraph-auto).
+    required: false
+    default: "true"
+  compare-to:
+    description: Branch to compare against in the PR comment.
+    required: false
+    default: main
+  upload:
+    description: Send results to Polygraph Cloud. Needs "id-token write" permission. Payload text is never uploaded.
+    required: false
+    default: "false"
+  api-url:
+    description: Polygraph Cloud API base URL.
+    required: false
+    default: https://polygraphmcp.dev/api
+  audience:
+    description: OIDC audience for uploads. Empty uses the CLI default (https://polygraphmcp.dev).
+    required: false
+    default: ""
+  comment:
+    description: Post or update one sticky PR comment with the results.
+    required: false
+    default: "true"
+  report-path:
+    description: Directory for results.json, report.html, junit.xml and the comment.
+    required: false
+    default: .polygraph
+  fail-on:
+    description: Comma-separated outcomes that fail the job. Ordinary test failures and pytest errors always fail it.
+    required: false
+    default: silent_lie,double_action,hijacked
+  results:
+    description: Path to an existing results.json. When set, pytest is skipped (used by the fork-PR workflow_run pattern).
+    required: false
+    default: ""
+  pr-number:
+    description: PR to comment on. Empty uses the pull_request event's number.
+    required: false
+    default: ""
+  artifact-name:
+    description: Name of the workflow artifact holding the reports. Make it unique per matrix leg.
+    required: false
+    default: polygraph-results
+  upload-artifact:
+    description: Upload the reports as a workflow artifact.
+    required: false
+    default: "true"
+  github-token:
+    description: Token for downloading the base-branch artifact and posting the comment. The workflow's own token is enough.
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  silent-lie-rate:
+    description: Silent-lie rate as a fraction (e.g. 0.025), empty if no faulted runs.
+    value: ${{ steps.summary.outputs.silent-lie-rate }}
+  coverage:
+    description: Fault coverage as covered/applicable (e.g. 18/22).
+    value: ${{ steps.summary.outputs.coverage }}
+  report-url:
+    description: Dashboard URL when uploaded, otherwise the workflow run URL with the artifact.
+    value: ${{ steps.summary.outputs.report-url }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      if: inputs.python-version != ''
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        PG_INSTALL: ${{ inputs.install }}
+      run: |
+        set -euo pipefail
+        python -m pip install --disable-pip-version-check --upgrade pip >/dev/null
+        # Word splitting is intended: PG_INSTALL is a list of pip arguments.
+        # shellcheck disable=SC2086
+        python -m pip install --disable-pip-version-check $PG_INSTALL
+        polygraph --help >/dev/null
+
+    - name: Prepare paths
+      id: paths
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        PG_REPORT_PATH: ${{ inputs.report-path }}
+        PG_RESULTS: ${{ inputs.results }}
+      run: |
+        set -euo pipefail
+        mkdir -p "$PG_REPORT_PATH"
+        dir="$(cd "$PG_REPORT_PATH" && pwd)"
+        if [[ -n "$PG_RESULTS" ]]; then
+          results="$(cd "$(dirname "$PG_RESULTS")" && pwd)/$(basename "$PG_RESULTS")"
+        else
+          results="$dir/results.json"
+        fi
+        {
+          echo "dir=$dir"
+          echo "results=$results"
+          echo "html=$dir/report.html"
+          echo "junit=$dir/junit.xml"
+          echo "pytest-junit=$dir/pytest-junit.xml"
+          echo "comment=$dir/polygraph-comment.md"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Run pytest with Polygraph
+      id: pytest
+      if: inputs.results == ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        PG_RUNS: ${{ inputs.runs }}
+        PG_AUTO: ${{ inputs.auto }}
+        PG_ARGS: ${{ inputs.pytest-args }}
+        PG_JSON: ${{ steps.paths.outputs.results }}
+        PG_HTML: ${{ steps.paths.outputs.html }}
+        PG_JUNIT: ${{ steps.paths.outputs.junit }}
+        PG_PYTEST_JUNIT: ${{ steps.paths.outputs.pytest-junit }}
+        # Never put payload text into OTel spans from CI.
+        PG_OTEL_CONTENT: "off"
+      run: |
+        set -uo pipefail
+        if ! [[ "$PG_RUNS" =~ ^[0-9]+$ ]] || [[ "$PG_RUNS" -lt 1 ]]; then
+          echo "::error::runs must be a positive integer"
+          exit 2
+        fi
+        args=(--polygraph-runs="$PG_RUNS" --polygraph-json="$PG_JSON"
+              --polygraph-report="$PG_HTML" --polygraph-junit="$PG_JUNIT"
+              --polygraph-otel-content="$PG_OTEL_CONTENT"
+              --junitxml="$PG_PYTEST_JUNIT")
+        if [[ "$PG_AUTO" == "true" ]]; then
+          args=(--polygraph-auto "${args[@]}")
+        fi
+        # Split user pytest-args the way a shell would, without evaluating them.
+        extra=()
+        while IFS= read -r arg; do
+          extra+=("$arg")
+        done < <(python -c 'import shlex,sys;[print(a) for a in shlex.split(sys.argv[1])]' "$PG_ARGS")
+        python -m pytest "${args[@]}" ${extra[@]+"${extra[@]}"}
+        code=$?
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        # The gate step decides pass/fail after reports and the comment exist.
+        exit 0
+
+    - name: Check results file
+      shell: bash
+      env:
+        PG_JSON: ${{ steps.paths.outputs.results }}
+      run: |
+        set -euo pipefail
+        if [[ ! -f "$PG_JSON" ]]; then
+          echo "::error::No Polygraph results file at $PG_JSON. Did pytest collect any tests?"
+          exit 1
+        fi
+        polygraph validate "$PG_JSON"
+
+    - name: Find base results
+      id: base
+      if: inputs.upload != 'true' && inputs.comment == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PG_BRANCH: ${{ inputs.compare-to }}
+        PG_ARTIFACT: ${{ inputs.artifact-name }}
+        PG_DIR: ${{ steps.paths.outputs.dir }}
+        PG_REPO: ${{ github.repository }}
+        PG_RUN_ID: ${{ github.run_id }}
+      run: |
+        set -uo pipefail
+        if ! command -v gh >/dev/null; then
+          echo "gh CLI not found; comparing without a base."
+          exit 0
+        fi
+        # Newest unexpired artifact with this name from a run on the base branch.
+        run_id="$(gh api -X GET "repos/${PG_REPO}/actions/artifacts" -f name="$PG_ARTIFACT" -f per_page=50 \
+          --jq "[.artifacts[] | select(.expired == false and .workflow_run.head_branch == \"${PG_BRANCH}\" and (.workflow_run.id|tostring) != \"${PG_RUN_ID}\")] | sort_by(.created_at) | last | .workflow_run.id // empty" 2>/dev/null)"
+        if [[ -z "$run_id" ]]; then
+          echo "No base-branch artifact found on '${PG_BRANCH}'; comparing without a base."
+          exit 0
+        fi
+        dest="$PG_DIR/base"
+        rm -rf "$dest"
+        if gh run download "$run_id" --repo "$PG_REPO" --name "$PG_ARTIFACT" --dir "$dest" >/dev/null 2>&1 \
+           && [[ -f "$dest/results.json" ]] && polygraph validate "$dest/results.json" >/dev/null 2>&1; then
+          echo "path=$dest/results.json" >> "$GITHUB_OUTPUT"
+          echo "Comparing with run $run_id on ${PG_BRANCH}."
+        else
+          echo "Could not use the base artifact from run $run_id; comparing without a base."
+        fi
+
+    - name: Write PR comment (local compare)
+      if: inputs.upload != 'true' && inputs.comment == 'true'
+      shell: bash
+      env:
+        PG_JSON: ${{ steps.paths.outputs.results }}
+        PG_COMMENT: ${{ steps.paths.outputs.comment }}
+        PG_BASE: ${{ steps.base.outputs.path }}
+      run: |
+        set -euo pipefail
+        args=(report --results "$PG_JSON" --pr-comment "$PG_COMMENT")
+        if [[ -n "${PG_BASE:-}" ]]; then
+          args+=(--compare "$PG_BASE")
+        fi
+        polygraph "${args[@]}"
+
+    - name: Upload to Polygraph Cloud
+      id: upload
+      if: inputs.upload == 'true'
+      shell: bash
+      env:
+        PG_JSON: ${{ steps.paths.outputs.results }}
+        PG_COMMENT: ${{ steps.paths.outputs.comment }}
+        PG_API: ${{ inputs.api-url }}
+        PG_BRANCH: ${{ inputs.compare-to }}
+        POLYGRAPH_OIDC_AUDIENCE: ${{ inputs.audience }}
+      run: |
+        set -euo pipefail
+        if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" && -z "${POLYGRAPH_TOKEN:-}" ]]; then
+          echo "::error::upload needs 'permissions: id-token: write' (or POLYGRAPH_TOKEN). Fork PRs get no OIDC token: use the workflow_run pattern from the action README."
+          exit 1
+        fi
+        [[ -n "$POLYGRAPH_OIDC_AUDIENCE" ]] || unset POLYGRAPH_OIDC_AUDIENCE
+        out="$(polygraph upload "$PG_JSON" --api "$PG_API" --wait --compare-to "$PG_BRANCH" --pr-comment "$PG_COMMENT")"
+        printf '%s\n' "$out"
+        url="$(printf '%s\n' "$out" | grep -Eo 'https://[^[:space:]]+/reports/rep_[A-Za-z0-9_-]+' | tail -1 || true)"
+        echo "url=$url" >> "$GITHUB_OUTPUT"
+
+    - name: Summarise
+      id: summary
+      if: always() && steps.paths.outputs.results != ''
+      shell: bash
+      env:
+        PG_JSON: ${{ steps.paths.outputs.results }}
+        PG_COMMENT: ${{ steps.paths.outputs.comment }}
+        PG_URL: ${{ steps.upload.outputs.url }}
+        PG_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        set -euo pipefail
+        [[ -f "$PG_JSON" ]] || exit 0
+        python - <<'PY'
+        import json, os
+        with open(os.environ["PG_JSON"], encoding="utf-8") as f:
+            data = json.load(f)
+        rate = (data.get("summary") or {}).get("silent_lie") or {}
+        value = rate.get("value")
+        cov = data.get("coverage") or {}
+        url = os.environ.get("PG_URL") or os.environ["PG_RUN_URL"]
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+            out.write(f"silent-lie-rate={'' if value is None else value}\n")
+            out.write(f"coverage={cov.get('covered', 0)}/{cov.get('applicable', 0)}\n")
+            out.write(f"report-url={url}\n")
+        comment = os.environ["PG_COMMENT"]
+        if os.path.exists(comment):
+            with open(comment, encoding="utf-8") as f:
+                body = f.read()
+            with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as s:
+                s.write(body + "\n")
+        PY
+
+    - name: Upload reports artifact
+      if: always() && inputs.upload-artifact == 'true' && inputs.results == ''
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: |
+          ${{ steps.paths.outputs.results }}
+          ${{ steps.paths.outputs.html }}
+          ${{ steps.paths.outputs.junit }}
+        if-no-files-found: warn
+        retention-days: 30
+
+    - name: Post sticky PR comment
+      if: always() && inputs.comment == 'true' && (inputs.pr-number != '' || github.event.pull_request.number)
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        PG_COMMENT: ${{ steps.paths.outputs.comment }}
+        PG_PR: ${{ inputs.pr-number || github.event.pull_request.number }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require("fs");
+          const marker = "<!-- polygraph -->";
+          const path = process.env.PG_COMMENT;
+          const pr = Number(process.env.PG_PR);
+          if (!Number.isInteger(pr) || pr <= 0) {
+            core.setFailed(`Invalid PR number: ${process.env.PG_PR}`);
+            return;
+          }
+          if (!path || !fs.existsSync(path)) {
+            core.info("No comment file was written; skipping the PR comment.");
+            return;
+          }
+          let body = fs.readFileSync(path, "utf8");
+          if (!body.includes(marker)) body = `${marker}\n${body}`;
+          if (body.length > 65000) body = body.slice(0, 64000) + "\n\n_Comment truncated. See the full report in the workflow artifacts._\n";
+          const { owner, repo } = context.repo;
+          const comments = await github.paginate(github.rest.issues.listComments, {
+            owner, repo, issue_number: pr, per_page: 100,
+          });
+          const mine = comments.find(
+            (c) => c.user && c.user.type === "Bot" && c.body && c.body.includes(marker),
+          );
+          if (mine) {
+            await github.rest.issues.updateComment({ owner, repo, comment_id: mine.id, body });
+            core.info(`Updated comment ${mine.id}`);
+          } else {
+            const { data } = await github.rest.issues.createComment({ owner, repo, issue_number: pr, body });
+            core.info(`Created comment ${data.id}`);
+          }
+
+    - name: Gate
+      if: inputs.results == ''
+      shell: bash
+      env:
+        PG_JSON: ${{ steps.paths.outputs.results }}
+        PG_PYTEST_JUNIT: ${{ steps.paths.outputs.pytest-junit }}
+        PG_FAIL_ON: ${{ inputs.fail-on }}
+        PG_EXIT: ${{ steps.pytest.outputs.exit-code }}
+      run: |
+        set -euo pipefail
+        python - <<'PY'
+        import json, os, sys
+        import xml.etree.ElementTree as ET
+
+        code = int(os.environ.get("PG_EXIT") or "0")
+        fail_on = {s.strip() for s in os.environ["PG_FAIL_ON"].split(",") if s.strip()}
+        valid = {"recovered", "honest_fail", "silent_lie", "double_action", "hijacked", "loop", "crash"}
+        unknown = fail_on - valid
+        if unknown:
+            print(f"::error::Unknown fail-on outcome(s): {', '.join(sorted(unknown))}")
+            sys.exit(1)
+
+        # pytest exit codes: 0 ok, 1 test failures, 2+ interrupted/internal/usage/no tests.
+        if code >= 2:
+            print(f"::error::pytest exited with code {code} (not a test failure).")
+            sys.exit(code)
+
+        with open(os.environ["PG_JSON"], encoding="utf-8") as f:
+            runs = json.load(f).get("runs", [])
+        bad = [r for r in runs if r.get("outcome") in fail_on]
+
+        other_failures = 0
+        # pytest's own JUnit (not Polygraph's per-run JUnit) tells us why tests failed.
+        junit = os.environ["PG_PYTEST_JUNIT"]
+        if code == 1 and os.path.exists(junit):
+            for case in ET.parse(junit).iter("testcase"):
+                for tag in ("failure", "error"):
+                    for el in case.findall(tag):
+                        text = " ".join(filter(None, [el.get("type"), el.get("message"), el.text]))
+                        if "PolygraphFailure" not in text:
+                            other_failures += 1
+        elif code == 1:
+            other_failures = 1
+
+        if bad:
+            counts = {}
+            for r in bad:
+                counts[r["outcome"]] = counts.get(r["outcome"], 0) + 1
+            detail = ", ".join(f"{k} {v}" for k, v in sorted(counts.items()))
+            print(f"::error::Polygraph found runs with failing outcomes: {detail}")
+        if other_failures:
+            print(f"::error::{other_failures} test failure(s) not caused by a Polygraph outcome.")
+        if bad or other_failures:
+            sys.exit(1)
+        print("Polygraph gate passed.")
+        PY

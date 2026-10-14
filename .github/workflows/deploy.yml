@@ -1,0 +1,200 @@
+name: Deploy
+
+# main -> build ARM64 images -> staging (migrate, roll out, smoke test)
+#      -> production (needs approval on the "production" GitHub Environment).
+#
+# Rollback: run this workflow by hand with "image-tag" set to an earlier git
+# SHA. That skips the build and redeploys the images already in ECR.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - cloud/**
+      - packages/pytest-polygraph/src/**
+      - .github/workflows/deploy.yml
+      - .github/workflows/deploy-env.yml
+      - .github/scripts/ecs-deploy.sh
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: Existing image tag (git SHA) to deploy. Empty = build the current commit.
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.image }} (arm64)
+    if: inputs.image-tag == ''
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write # OIDC to AWS + attestation signing
+      attestations: write
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          # One API image runs the api, worker, migrations and the prune job.
+          # The shared results schema comes in as a named build context.
+          - image: api
+            context: cloud/api
+            dockerfile: cloud/api/Dockerfile
+            build_contexts: polygraph_pkg=packages/pytest-polygraph
+            repository_var: ECR_API_REPOSITORY
+          - image: web
+            context: cloud/web
+            dockerfile: cloud/web/Dockerfile
+            build_contexts: ""
+            repository_var: ECR_WEB_REPOSITORY
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gh-build-${{ matrix.image }}-${{ github.run_id }}
+
+      - name: Log in to ECR
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+        with:
+          mask-password: "true"
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Image reference
+        id: ref
+        env:
+          REPOSITORY: ${{ vars[matrix.repository_var] }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [[ -z "$REPOSITORY" ]]; then
+            echo "::error::GitHub Environment variable ${{ matrix.repository_var }} is not set (see infra/README.md)"
+            exit 1
+          fi
+          echo "image=${REPOSITORY}:${SHA}" >> "$GITHUB_OUTPUT"
+          echo "repository=${REPOSITORY}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if this commit is already built
+        id: exists
+        env:
+          REPOSITORY: ${{ steps.ref.outputs.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          name="${REPOSITORY#*/}"
+          if aws ecr describe-images --repository-name "$name" --image-ids imageTag="$SHA" >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push
+        id: build
+        if: steps.exists.outputs.found != 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          build-contexts: ${{ matrix.build_contexts }}
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.ref.outputs.image }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.licenses=Apache-2.0
+
+      - name: Image must run as non-root
+        env:
+          IMAGE: ${{ steps.ref.outputs.image }}
+        run: |
+          set -euo pipefail
+          docker pull --quiet --platform linux/arm64 "$IMAGE" >/dev/null
+          user="$(docker image inspect --format '{{.Config.User}}' "$IMAGE")"
+          case "$user" in
+            ""|root|0|0:*|root:*)
+              echo "::error::$IMAGE runs as '${user:-root}'. Set a non-root USER in the Dockerfile."
+              exit 1 ;;
+          esac
+          echo "runs as $user"
+
+      - name: Attest image provenance
+        if: steps.exists.outputs.found != 'true'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ steps.ref.outputs.repository }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+  plan:
+    name: Pick image tag
+    needs: build
+    # Run after a successful build, or straight away for a manual redeploy.
+    if: ${{ !cancelled() && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: staging
+    outputs:
+      image-tag: ${{ steps.tag.outputs.tag }}
+      staging-api-repository: ${{ steps.tag.outputs.api }}
+      staging-web-repository: ${{ steps.tag.outputs.web }}
+    steps:
+      - id: tag
+        env:
+          INPUT_TAG: ${{ inputs.image-tag }}
+          SHA: ${{ github.sha }}
+          API_REPO: ${{ vars.ECR_API_REPOSITORY }}
+          WEB_REPO: ${{ vars.ECR_WEB_REPOSITORY }}
+        run: |
+          tag="${INPUT_TAG:-$SHA}"
+          if ! [[ "$tag" =~ ^[0-9a-f]{7,40}$ ]]; then
+            echo "::error::image-tag must be a git SHA"
+            exit 1
+          fi
+          {
+            echo "tag=$tag"
+            echo "api=$API_REPO"
+            echo "web=$WEB_REPO"
+          } >> "$GITHUB_OUTPUT"
+
+  staging:
+    name: Staging
+    needs: plan
+    if: ${{ !cancelled() && needs.plan.result == 'success' }}
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy-env.yml
+    with:
+      environment: staging
+      image-tag: ${{ needs.plan.outputs.image-tag }}
+
+  production:
+    name: Production
+    needs: [plan, staging]
+    if: ${{ !cancelled() && needs.staging.result == 'success' }}
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy-env.yml
+    with:
+      environment: production
+      image-tag: ${{ needs.plan.outputs.image-tag }}
+      promote-from-api: ${{ needs.plan.outputs.staging-api-repository }}
+      promote-from-web: ${{ needs.plan.outputs.staging-web-repository }}

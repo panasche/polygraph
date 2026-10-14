@@ -1,0 +1,424 @@
+.hero {
+  padding-top: clamp(3rem, 7vw, 5.5rem);
+  padding-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.heroTop {
+  display: grid;
+  gap: 1.75rem;
+}
+
+@media (min-width: 68rem) {
+  .heroTop {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    align-items: end;
+    gap: 3.5rem;
+  }
+  .heroTop .heroLead {
+    margin-top: 0;
+    font-size: var(--t-18);
+  }
+}
+
+.heroTitle {
+  font-size: clamp(2.6rem, 6.2vw, 5.1rem);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.heroLead {
+  margin-top: 0;
+  max-width: 36rem;
+  font-size: var(--t-21);
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.heroNote {
+  margin-top: 0.85rem;
+  font-size: var(--t-14);
+  color: var(--ink-muted);
+}
+
+.heroTrace {
+  margin-top: clamp(2.5rem, 5vw, 3.75rem);
+}
+
+.section {
+  padding-top: clamp(3.5rem, 7vw, 6rem);
+  padding-bottom: clamp(1rem, 2vw, 1.5rem);
+}
+
+.h2 {
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  letter-spacing: -0.03em;
+  max-width: 22ch;
+}
+
+.lede {
+  margin-top: 0.85rem;
+  max-width: 38rem;
+  color: var(--ink-muted);
+  font-size: var(--t-18);
+  line-height: 1.5;
+}
+
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-bottom: 2rem;
+}
+
+.sectionHead > a {
+  font-size: var(--t-14);
+  font-weight: 600;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 2rem clamp(2rem, 5vw, 4.5rem);
+  align-items: start;
+}
+
+@media (max-width: 56rem) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* How it works: a real sequence, so it gets numbers. */
+.steps {
+  counter-reset: step;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem clamp(1.5rem, 3vw, 3rem);
+  margin: 2.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps li {
+  counter-increment: step;
+  padding-top: 1rem;
+  border-top: 2px solid var(--ink);
+}
+
+.steps h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: var(--t-21);
+}
+
+.steps h3::before {
+  content: counter(step);
+  font-size: var(--t-14);
+  font-weight: 600;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.steps p {
+  margin-top: 0.6rem;
+  color: var(--ink-muted);
+}
+
+@media (max-width: 56rem) {
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.codeRow {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+  align-items: start;
+}
+
+.codeMain {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.terminal {
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--r-md);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.terminal code {
+  font-size: 0.78rem;
+}
+
+@media (max-width: 56rem) {
+  .codeRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Outcome buckets */
+.buckets {
+  margin: 0;
+  display: grid;
+}
+
+.bucket {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.bucket:first-child {
+  border-top: 1px solid var(--rule);
+}
+
+.bucket dt {
+  font-weight: 600;
+}
+
+.bucket dd {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+@media (max-width: 30rem) {
+  .bucket {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+  }
+}
+
+/* Fault families */
+.families {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.family h3 {
+  font-size: var(--t-18);
+  letter-spacing: -0.015em;
+  min-height: 2.5em;
+}
+
+.familyBlurb {
+  margin-top: 0.45rem;
+  font-size: var(--t-14);
+  color: var(--ink-muted);
+}
+
+.family ul {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0;
+}
+
+.family li {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--rule);
+  font-size: var(--t-14);
+}
+
+.family li code {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.family li span {
+  color: var(--ink-muted);
+}
+
+@media (max-width: 64rem) {
+  .families {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 36rem) {
+  .families {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .family h3 {
+    min-height: 0;
+  }
+}
+
+.lbLoading {
+  padding: 2rem 0;
+  color: var(--ink-muted);
+}
+
+/* Recipes */
+.recipes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--rule);
+}
+
+.recipes li {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) minmax(0, 15rem);
+  gap: 0.5rem 1.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: baseline;
+}
+
+.recipeId {
+  font-size: var(--t-14);
+  color: var(--ink-faint);
+}
+
+.recipes h3 {
+  font-size: var(--t-18);
+  letter-spacing: -0.01em;
+}
+
+.recipes p {
+  margin-top: 0.2rem;
+  color: var(--ink-muted);
+}
+
+.recipeFixes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.recipeFixes code {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--r-sm);
+  background: var(--paper-sunk);
+  color: var(--ink-muted);
+}
+
+@media (max-width: 48rem) {
+  .recipes li {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+  }
+  .recipeFixes {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}
+
+/* Badge */
+.badgeShow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 1.75rem;
+}
+
+.badgeCaption {
+  font-size: var(--t-12);
+  color: var(--ink-faint);
+}
+
+/* Limits */
+.limits {
+  margin: 0;
+  display: grid;
+  border-top: 1px solid var(--rule);
+}
+
+.limits div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.limits dt {
+  color: var(--ink-muted);
+}
+
+.limits dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* FAQ */
+.faq {
+  border-top: 1px solid var(--rule);
+}
+
+.faq details {
+  border-bottom: 1px solid var(--rule);
+}
+
+.faq summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary::after {
+  content: "";
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 1.5px solid var(--ink-muted);
+  border-bottom: 1.5px solid var(--ink-muted);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 180ms var(--ease-out);
+}
+
+.faq details[open] summary::after {
+  transform: rotate(-135deg) translateY(-2px);
+}
+
+.faq details p {
+  padding: 0 0 1.1rem;
+  max-width: 40rem;
+  color: var(--ink-muted);
+}
+
+.closing {
+  padding-top: clamp(4rem, 8vw, 7rem);
+  padding-bottom: clamp(4rem, 8vw, 7rem);
+}
+
+.closingTitle {
+  font-size: clamp(2rem, 4.6vw, 3.5rem);
+  letter-spacing: -0.04em;
+  max-width: 18ch;
+}

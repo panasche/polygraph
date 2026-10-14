@@ -1,0 +1,54 @@
+.block {
+  margin: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  background: var(--paper-raised);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.title {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: var(--t-12);
+  color: var(--ink-muted);
+}
+
+.pre {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  tab-size: 2;
+}
+
+.pre code {
+  font-size: inherit;
+}
+
+.line {
+  display: inline;
+}
+
+.comment {
+  color: var(--ink-faint);
+}
+
+.str {
+  color: var(--green);
+}
+
+.kw {
+  color: var(--blue);
+}
+
+.deco {
+  color: var(--amber);
+}
+
+.section {
+  color: var(--blue);
+  font-weight: 600;
+}

@@ -1,0 +1,266 @@
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--rule);
+}
+
+.headerInner {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  height: 3.75rem;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-right: auto;
+  font-size: var(--t-14);
+  font-weight: 500;
+}
+
+.nav a {
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.nav a:hover {
+  color: var(--ink);
+}
+
+.navGithub {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+@media (max-width: 44rem) {
+  .nav {
+    display: none;
+  }
+  .headerCta {
+    margin-left: auto;
+  }
+}
+
+/* Footer */
+.footer {
+  margin-top: 2rem;
+  border-top: 1px solid var(--rule);
+  background: var(--paper-sunk);
+}
+
+.footerInner {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+  padding-top: 3rem;
+  padding-bottom: 3.5rem;
+  font-size: var(--t-14);
+}
+
+.footerLead {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+  max-width: 24rem;
+  color: var(--ink-muted);
+}
+
+.footerNote {
+  font-size: var(--t-12);
+}
+
+.footerCol {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.footerCol h2 {
+  font-size: var(--t-14);
+  letter-spacing: 0;
+  margin-bottom: 0.25rem;
+}
+
+.footerCol a {
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.footerCol a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+@media (max-width: 48rem) {
+  .footerInner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .footerLead {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Leaderboard */
+.lbWrap {
+  overflow-x: auto;
+  border-top: 2px solid var(--ink);
+}
+
+.lb {
+  min-width: 52rem;
+  font-size: var(--t-14);
+}
+
+.lb th,
+.lb td {
+  padding: 0.8rem 1rem 0.8rem 0;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--rule);
+}
+
+.lb thead th {
+  font-weight: 600;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.lb tbody th {
+  font-weight: 600;
+}
+
+.lbFramework {
+  display: block;
+  font-size: var(--t-16);
+}
+
+.lbMeta {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+.lbRate {
+  white-space: nowrap;
+}
+
+.lbRate > * {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.lbValue {
+  width: 3rem;
+  font-weight: 650;
+}
+
+.lbCi {
+  display: block !important;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+
+.lbNum {
+  text-align: right !important;
+  padding-right: 0 !important;
+}
+
+.lbEmpty {
+  display: grid;
+  gap: 0.6rem;
+  padding: 2rem 0 2rem 1.25rem;
+  border-left: 2px solid var(--grid-strong);
+  max-width: 44rem;
+  color: var(--ink-muted);
+}
+
+.lbEmptyTitle {
+  font-size: var(--t-18);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lbEmptyNote {
+  font-size: var(--t-14);
+  color: var(--amber);
+}
+
+/* Prose pages (docs, privacy, terms) */
+.prose {
+  max-width: 44rem;
+  padding-top: clamp(2.5rem, 6vw, 4.5rem);
+  padding-bottom: 4rem;
+}
+
+.prose h1 {
+  font-size: clamp(2.2rem, 5vw, 3.25rem);
+  letter-spacing: -0.04em;
+}
+
+.prose h2 {
+  margin-top: 2.75rem;
+  font-size: var(--t-24);
+  letter-spacing: -0.02em;
+}
+
+.prose h3 {
+  margin-top: 1.75rem;
+  font-size: var(--t-18);
+}
+
+.prose p,
+.prose ul,
+.prose ol {
+  margin-top: 0.85rem;
+  color: var(--ink);
+}
+
+.prose li + li {
+  margin-top: 0.35rem;
+}
+
+.prose figure {
+  margin-top: 1rem;
+}
+
+.proseLead {
+  margin-top: 1rem !important;
+  font-size: var(--t-18);
+  color: var(--ink-muted) !important;
+}
+
+.proseMeta {
+  margin-top: 0.75rem !important;
+  font-size: var(--t-14);
+  color: var(--ink-faint) !important;
+}
+
+.proseTable {
+  margin-top: 1rem;
+  font-size: var(--t-14);
+}
+
+.proseTable th,
+.proseTable td {
+  text-align: left;
+  padding: 0.6rem 1rem 0.6rem 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+.proseTable th {
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.wide {
+  max-width: var(--page-max);
+}

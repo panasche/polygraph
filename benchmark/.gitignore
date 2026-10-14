@@ -1,0 +1,4 @@
+# per-framework virtualenvs and run output (results keep payload text locally)
+.venvs/
+out/
+labels*.csv

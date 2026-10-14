@@ -1,0 +1,85 @@
+# --- Secrets and local config (never commit) ---------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+backend.hcl
+!backend.hcl.example
+*.tfvars
+!*.tfvars.example
+*.tfvars.json
+
+# --- Python ------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+# --- Polygraph outputs and local data ----------------------------------------
+.polygraph/
+polygraph.html
+polygraph-comment.md
+.data/
+
+# --- Free single-server deploy (deploy/free) ----------------------------------
+deploy/free/s3.json
+backups/
+*.db
+*.sqlite3
+
+# --- Node / Next.js ----------------------------------------------------------
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+npm-debug.log*
+.vercel/
+
+# --- Terraform ---------------------------------------------------------------
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+infra/**/.build/
+
+# --- Local tool binaries -----------------------------------------------------
+.tools/
+bin/
+tools/bin/
+
+# --- Editors and OS ----------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+.DS_Store
+Thumbs.db
+.claude/settings.local.json

@@ -1,0 +1,252 @@
+/* Polygraph design tokens.
+   Chart paper and pen ink: the page is the paper, colour is ink, and crimson is
+   reserved for the three outcomes that mean the agent can't be trusted. */
+
+:root {
+  --paper: #f2f5f3;
+  --paper-raised: #fafbfa;
+  --paper-sunk: #e9eeeb;
+  --ink: #18212b;
+  --ink-muted: #56636f;
+  --ink-faint: #85929c;
+  --rule: #d3deda;
+  --grid: #e2e9e5;
+  --grid-strong: #cfdcd6;
+
+  --blue: #2450a6;
+  --blue-strong: #1b3f86;
+  --blue-wash: #e2e9f5;
+  --on-blue: #ffffff;
+  --green: #2e7a5a;
+  --green-wash: #dfeee7;
+  --crimson: #b3262e;
+  --crimson-wash: #f5e1e1;
+  --amber: #a86e12;
+  --amber-wash: #f4ead6;
+
+  --tone-good: var(--green);
+  --tone-warn: var(--amber);
+  --tone-bad: var(--crimson);
+
+  --focus: #2450a6;
+
+  /* Type scale (the classic 16-step scale, trimmed). */
+  --t-12: 0.75rem;
+  --t-14: 0.875rem;
+  --t-16: 1rem;
+  --t-18: 1.125rem;
+  --t-21: 1.3125rem;
+  --t-24: 1.5rem;
+  --t-30: 1.875rem;
+  --t-36: 2.25rem;
+  --t-48: 3rem;
+  --t-60: 3.75rem;
+  --t-72: 4.5rem;
+
+  --r-sm: 3px;
+  --r-md: 6px;
+
+  --page-max: 76rem;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #131a1e;
+    --paper-raised: #182126;
+    --paper-sunk: #0f1518;
+    --ink: #e6ece9;
+    --ink-muted: #a3b0b8;
+    --ink-faint: #74828b;
+    --rule: #2b383e;
+    --grid: #1e292e;
+    --grid-strong: #2b383e;
+    --blue: #7fa2e6;
+    --blue-strong: #a6c0f0;
+    --blue-wash: #1d2a40;
+    --on-blue: #0f1518;
+    --green: #5fb48f;
+    --green-wash: #183128;
+    --crimson: #ec7a7f;
+    --crimson-wash: #3a1d20;
+    --amber: #d9a24a;
+    --amber-wash: #33281a;
+    --focus: #a6c0f0;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #131a1e;
+  --paper-raised: #182126;
+  --paper-sunk: #0f1518;
+  --ink: #e6ece9;
+  --ink-muted: #a3b0b8;
+  --ink-faint: #74828b;
+  --rule: #2b383e;
+  --grid: #1e292e;
+  --grid-strong: #2b383e;
+  --blue: #7fa2e6;
+  --blue-strong: #a6c0f0;
+  --blue-wash: #1d2a40;
+  --on-blue: #0f1518;
+  --green: #5fb48f;
+  --green-wash: #183128;
+  --crimson: #ec7a7f;
+  --crimson-wash: #3a1d20;
+  --amber: #d9a24a;
+  --amber-wash: #33281a;
+  --focus: #a6c0f0;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: var(--t-16);
+  line-height: 1.55;
+  font-feature-settings: "ss01", "tnum" 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--blue);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--blue-strong);
+}
+
+code,
+kbd,
+pre,
+.mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.9em;
+  font-variant-ligatures: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+::selection {
+  background: var(--blue-wash);
+  color: var(--ink);
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  z-index: 100;
+  padding: 0.5rem 0.75rem;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--r-sm);
+}
+
+.skip-link:focus {
+  top: 1rem;
+  color: var(--paper);
+}
+
+.page {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Chart paper: a fine 8px grid with a heavier line every 40px. Used sparingly,
+   only where the page is literally showing a trace. */
+.chart-paper {
+  background-color: var(--paper-raised);
+  background-image:
+    linear-gradient(var(--grid-strong) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-strong) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:
+    40px 40px,
+    40px 40px,
+    8px 8px,
+    8px 8px;
+  background-position: -1px -1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

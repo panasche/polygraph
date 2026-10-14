@@ -1,0 +1,33 @@
+.wrap {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+  max-width: 40rem;
+  padding-top: clamp(3rem, 10vw, 7rem);
+  padding-bottom: 4rem;
+}
+
+.title {
+  margin-top: 1.5rem;
+  font-size: var(--t-36);
+  letter-spacing: -0.035em;
+}
+
+.text {
+  color: var(--ink-muted);
+  font-size: var(--t-18);
+}
+
+.digest {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: var(--t-12);
+  color: var(--ink-faint);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem;
+  font-weight: 600;
+}

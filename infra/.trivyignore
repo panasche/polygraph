@@ -1,0 +1,3 @@
+# Trivy misconfiguration ignores for infra/.
+# Empty on purpose: the HIGH/CRITICAL scan is clean. If you add an entry,
+# write the reason on the line above it.

@@ -1,0 +1,20 @@
+# Model prices for the cost report, in Indian rupees (₹) per 1,000,000 tokens.
+#
+# You fill these in. Copy the numbers from your provider's price page on the day
+# you run, convert them to ₹ yourself, and write down the date and the exchange
+# rate you used. Polygraph never guesses a price: a model with no entry here (or
+# an empty value) shows "not priced" in the cost report, never ₹0.
+#
+# Keys are the same "provider:model-id" you pass in POLYGRAPH_BENCH_MODEL.
+# Values are strings so you can paste exact decimals ("12.50").
+#
+# Example (remove the leading "# " and fill in the blanks):
+#
+# [models."openai:YOUR-MODEL-ID"]
+# input_inr_per_million = ""
+# output_inr_per_million = ""
+# source = ""            # where the price came from (URL or note)
+# priced_on = ""         # YYYY-MM-DD
+# usd_inr_rate = ""      # only if you converted from USD
+
+[models]

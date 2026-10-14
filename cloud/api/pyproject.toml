@@ -1,0 +1,70 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "polygraph-cloud"
+version = "0.1.0"
+description = "Polygraph Cloud: the hosted results dashboard API and upload worker for Polygraph for MCP."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+authors = [{ name = "Polygraph contributors" }]
+dependencies = [
+  # pytest-polygraph provides polygraph.results / polygraph.metrics (pydantic only).
+  # Install it from the monorepo with: pip install -e ../../packages/pytest-polygraph --no-deps
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sqlalchemy[asyncio]>=2.0.30",
+  "aiosqlite>=0.20",
+  "psycopg[binary]>=3.2",
+  "alembic>=1.13",
+  "pydantic>=2.7,<3",
+  "pydantic-settings>=2.4",
+  "httpx>=0.27",
+  "pyjwt[crypto]>=2.9",
+  "cryptography>=43",
+  "boto3>=1.35",
+  "structlog>=24.4",
+]
+
+[project.optional-dependencies]
+presidio = ["presidio-analyzer>=2.2.355"]
+test = [
+  "pytest>=8",
+  "pytest-asyncio>=1.0",
+  "respx>=0.21",
+  "asgi-lifespan>=2.1",
+  "moto[s3,sqs]>=5",
+  "pgserver>=0.1.4",
+  "ruff>=0.6",
+]
+
+[project.scripts]
+polygraph-cloud = "polygraph_cloud.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/polygraph_cloud"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# pytest-polygraph registers a pytest plugin; the API tests don't use it.
+addopts = "-ra -p no:polygraph -p no:cacheprovider"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["error::pytest.PytestUnraisableExceptionWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "SIM"]
+ignore = ["S101", "B008"]  # B008: FastAPI's Depends()/Query() defaults
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S311", "E501"]
+"src/polygraph_cloud/migrations/versions/*" = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["polygraph_cloud", "polygraph", "conftest"]

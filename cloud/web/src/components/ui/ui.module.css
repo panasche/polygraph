@@ -1,0 +1,262 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--t-14);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.button:disabled,
+.button[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: var(--blue);
+  color: var(--on-blue);
+}
+.primary:hover:not(:disabled) {
+  background: var(--blue-strong);
+  color: var(--on-blue);
+}
+
+.secondary {
+  background: transparent;
+  border-color: var(--grid-strong);
+  color: var(--ink);
+}
+.secondary:hover:not(:disabled) {
+  border-color: var(--ink-muted);
+  color: var(--ink);
+}
+
+.quiet {
+  background: transparent;
+  color: var(--ink-muted);
+  padding-inline: 0.5rem;
+}
+.quiet:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.danger {
+  background: transparent;
+  border-color: var(--crimson);
+  color: var(--crimson);
+}
+.danger:hover:not(:disabled) {
+  background: var(--crimson-wash);
+  color: var(--crimson);
+}
+
+.small {
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  font-size: var(--t-12);
+}
+
+.copy {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+  border: 1px solid var(--grid-strong);
+  border-radius: var(--r-sm);
+  background: var(--paper-raised);
+  overflow: hidden;
+}
+
+.copyText {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0 0.9rem;
+  min-height: 2.5rem;
+  font-size: var(--t-14);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.copyPrompt {
+  color: var(--ink-faint);
+  user-select: none;
+}
+
+.copyButton {
+  border: 0;
+  border-left: 1px solid var(--grid-strong);
+  background: transparent;
+  color: var(--ink-muted);
+  padding: 0 0.85rem;
+  font: inherit;
+  font-size: var(--t-12);
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 4.5rem;
+}
+
+.copyButton:hover {
+  color: var(--ink);
+  background: var(--paper-sunk);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--t-14);
+  white-space: nowrap;
+}
+
+.chip::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.good {
+  color: var(--green);
+}
+.warn {
+  color: var(--amber);
+}
+.bad {
+  color: var(--crimson);
+}
+.chipLabel {
+  color: var(--ink);
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: var(--t-18);
+  letter-spacing: -0.02em;
+}
+
+.logo:hover {
+  color: var(--ink);
+}
+
+.logoSub {
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.label {
+  font-size: var(--t-14);
+  font-weight: 600;
+}
+
+.hint {
+  font-size: var(--t-14);
+  color: var(--ink-muted);
+}
+
+.input,
+.select {
+  min-height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--grid-strong);
+  border-radius: var(--r-sm);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-14);
+}
+
+.input:focus-visible,
+.select:focus-visible {
+  outline-offset: 0;
+  border-color: var(--focus);
+}
+
+.switch {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.85rem;
+  align-items: start;
+  cursor: pointer;
+}
+
+.switchInput {
+  appearance: none;
+  margin: 0.15rem 0 0;
+  width: 2.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--grid-strong);
+  position: relative;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  grid-row: span 2;
+}
+
+.switchInput::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.25rem - 4px);
+  height: calc(1.25rem - 4px);
+  border-radius: 50%;
+  background: var(--paper-raised);
+  transition: transform 180ms var(--ease-out);
+}
+
+.switchInput:checked {
+  background: var(--blue);
+}
+
+.switchInput:checked::after {
+  transform: translateX(1rem);
+}
+
+.switchInput:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notice {
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--blue);
+  background: var(--blue-wash);
+  font-size: var(--t-14);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+
+.noticeBad {
+  border-left-color: var(--crimson);
+  background: var(--crimson-wash);
+}
+
+.noticeWarn {
+  border-left-color: var(--amber);
+  background: var(--amber-wash);
+}

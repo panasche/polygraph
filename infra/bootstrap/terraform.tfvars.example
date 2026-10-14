@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (gitignored).
+allowed_account_ids = ["YOUR_AWS_ACCOUNT_ID"]
+
+# The name has a pending trademark check; change this if the domain changes.
+zone_name = "polygraphmcp.dev"
+
+# Set false if the account already has a GitHub OIDC provider or a zone.
+create_github_oidc_provider = true
+create_hosted_zone          = true

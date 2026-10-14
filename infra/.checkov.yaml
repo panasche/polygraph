@@ -1,0 +1,12 @@
+# Checkov settings for infra/. Every skip has a reason.
+# Resource-specific skips live next to the resource as #checkov:skip comments.
+framework:
+  - terraform
+skip-path:
+  - \.terraform
+skip-check:
+  # Log retention is kept short on purpose (data minimisation: logs hold IP
+  # addresses). 30 days in staging, 90 in production.
+  - CKV_AWS_338
+  # AZ names are only used to spread subnets; their order does not matter here.
+  - CKV_AWS_394

@@ -1,0 +1,440 @@
+/* ---------- Interval plot ---------- */
+
+.interval {
+  overflow: visible;
+}
+
+.track {
+  stroke: var(--grid-strong);
+  stroke-width: 1;
+}
+
+.whisker {
+  stroke-width: 1.5;
+  stroke: var(--ink-muted);
+}
+
+.dot {
+  fill: var(--ink);
+  stroke: var(--paper-raised);
+  stroke-width: 1.5;
+}
+
+.tone_bad .whisker {
+  stroke: var(--crimson);
+}
+.tone_bad .dot {
+  fill: var(--crimson);
+}
+.tone_good .whisker {
+  stroke: var(--green);
+}
+.tone_good .dot {
+  fill: var(--green);
+}
+
+.metricRow {
+  display: grid;
+  grid-template-columns: minmax(9rem, 1.2fr) 4.5rem 14rem minmax(9rem, 1fr);
+  align-items: center;
+  gap: 0.25rem 1.25rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.metricRow:last-child {
+  border-bottom: 0;
+}
+
+.metricName {
+  display: grid;
+  font-weight: 600;
+}
+
+.metricHint {
+  font-weight: 400;
+  font-size: var(--t-14);
+  color: var(--ink-muted);
+}
+
+.metricValue {
+  font-size: var(--t-24);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  text-align: right;
+}
+
+.valueBad {
+  color: var(--crimson);
+}
+
+.metricPlot {
+  display: flex;
+}
+
+.metricCounts {
+  display: grid;
+  font-size: var(--t-14);
+  color: var(--ink-muted);
+}
+
+.metricCi {
+  font-size: var(--t-12);
+  color: var(--ink-faint);
+}
+
+@media (max-width: 48rem) {
+  .metricRow {
+    grid-template-columns: 1fr auto;
+  }
+  .metricPlot,
+  .metricCounts {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------- Outcome bar ---------- */
+
+.outcomes {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.outcomeBar {
+  display: flex;
+  height: 0.85rem;
+  gap: 2px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+
+.outcomeEmpty {
+  flex: 1;
+  background: var(--grid);
+}
+
+.outcomeSeg {
+  min-width: 3px;
+}
+
+.seg_recovered {
+  background: var(--green);
+}
+.seg_honest_fail {
+  background: color-mix(in srgb, var(--amber) 55%, var(--paper-raised));
+}
+.seg_silent_lie {
+  background: var(--crimson);
+}
+.seg_double_action {
+  background: color-mix(in srgb, var(--crimson) 75%, var(--ink));
+}
+.seg_hijacked {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--crimson) 0 4px,
+    color-mix(in srgb, var(--crimson) 55%, var(--paper-raised)) 4px 7px
+  );
+}
+.seg_loop {
+  background: var(--amber);
+}
+.seg_crash {
+  background: var(--ink-faint);
+}
+
+.outcomeLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--t-14);
+}
+
+.outcomeLegend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legendZero {
+  color: var(--ink-faint);
+}
+
+.legendSwatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 2px;
+}
+
+.legendCount {
+  font-weight: 600;
+}
+
+/* ---------- Heatmap ---------- */
+
+.heatWrap {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.heatWrap > table {
+  display: block;
+  overflow-x: auto;
+}
+
+.heat {
+  border-collapse: separate;
+  border-spacing: 3px;
+  font-size: var(--t-12);
+  width: auto;
+}
+
+.heatCorner {
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink-muted);
+  padding: 0 0.75rem 0.4rem 0;
+  vertical-align: bottom;
+}
+
+.heatCol {
+  height: 7.5rem;
+  vertical-align: bottom;
+  padding: 0 0 0.4rem;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.heatCol span {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+
+.heatRow {
+  text-align: left;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-right: 0.75rem;
+}
+
+.heatServer {
+  color: var(--ink-faint);
+}
+
+.heatCell {
+  position: relative;
+  width: 3rem;
+  min-width: 3rem;
+  height: 2.1rem;
+  border-radius: var(--r-sm);
+  text-align: center;
+  font-weight: 600;
+}
+
+.heatLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--r-sm);
+}
+
+.heatLink:hover {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+  color: inherit;
+}
+
+.heatClean {
+  background: var(--green-wash);
+  color: var(--green);
+}
+
+.heatBad {
+  background: color-mix(in srgb, var(--crimson) var(--heat, 40%), var(--paper-raised));
+  color: #fff;
+}
+
+.heatUntested {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--ink-faint);
+  background-image: repeating-linear-gradient(135deg, transparent 0 5px, var(--grid) 5px 6px);
+}
+
+.heatNa {
+  background: transparent;
+}
+
+.heatTop {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+.heatLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--t-12);
+  color: var(--ink-muted);
+}
+
+.heatLegend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.heatKey {
+  display: inline-block;
+  width: 1rem;
+  height: 0.75rem;
+  border-radius: 2px;
+}
+
+.heatTopKey {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+/* ---------- Trend chart ---------- */
+
+.trend {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.tab {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: var(--t-14);
+  font-weight: 500;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--ink);
+  border-color: var(--grid-strong);
+  background: var(--paper-raised);
+  font-weight: 600;
+}
+
+.trendPlot {
+  position: relative;
+  min-width: 0;
+}
+
+.trendPlot svg {
+  touch-action: pan-y;
+}
+
+.gridline {
+  stroke: var(--grid);
+  stroke-width: 1;
+}
+
+.axisText {
+  font-size: 11px;
+  fill: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.band {
+  stroke: none;
+}
+
+.band_bad {
+  fill: color-mix(in srgb, var(--crimson) 14%, transparent);
+}
+
+.band_good {
+  fill: color-mix(in srgb, var(--green) 14%, transparent);
+}
+
+.trendLine {
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+}
+
+.line_bad {
+  stroke: var(--crimson);
+  fill: var(--crimson);
+}
+
+.line_good {
+  stroke: var(--green);
+  fill: var(--green);
+}
+
+.trendLine.line_bad,
+.trendLine.line_good {
+  fill: none;
+}
+
+.trendDot {
+  stroke: var(--paper-raised);
+  stroke-width: 1.5;
+  transition: r 120ms ease;
+}
+
+.hoverLine {
+  stroke: var(--ink-faint);
+  stroke-dasharray: 2 3;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  display: grid;
+  gap: 0.1rem;
+  width: 12rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--r-sm);
+  font-size: var(--t-12);
+  pointer-events: none;
+}
+
+.tooltip strong {
+  font-size: var(--t-16);
+}
+
+.emptyNote {
+  color: var(--ink-muted);
+  font-size: var(--t-14);
+  padding: 1.5rem 0;
+}
