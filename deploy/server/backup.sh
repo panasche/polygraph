@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # Back up the database and the stored result files, keeping the last 7 days.
 #
-#   ./deploy/free/backup.sh                 (also runs daily from cron)
-#   BACKUP_DIR=/mnt/backups ./deploy/free/backup.sh
+#   ./deploy/server/backup.sh                 (also runs daily from cron)
+#   BACKUP_DIR=/mnt/backups ./deploy/server/backup.sh
 #
 # Backups live on the same server, so they protect against mistakes, not
 # against losing the server. Copy them somewhere else now and then, keeping
 # them encrypted: they contain the same personal data as the live site.
 #
 # Restore (best done while nobody is using the site):
-#   ./deploy/free/polygraph.sh exec -T postgres sh -c \
+#   ./deploy/server/polygraph.sh exec -T postgres sh -c \
 #     'pg_restore --clean --if-exists -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < backups/db-<stamp>.dump
-#   ./deploy/free/polygraph.sh stop s3
+#   ./deploy/server/polygraph.sh stop s3
 #   docker run --rm -i -v polygraph_s3data:/data alpine:3.22 sh -c 'rm -rf /data/* && tar -C /data -xz' \
 #     < backups/files-<stamp>.tar.gz
-#   ./deploy/free/polygraph.sh up -d
+#   ./deploy/server/polygraph.sh up -d
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

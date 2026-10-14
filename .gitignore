@@ -39,8 +39,8 @@ polygraph.html
 polygraph-comment.md
 .data/
 
-# --- Free single-server deploy (deploy/free) ----------------------------------
-deploy/free/s3.json
+# --- Single-server deploy (deploy/server) ----------------------------------
+deploy/server/s3.json
 backups/
 *.db
 *.sqlite3

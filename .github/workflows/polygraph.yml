@@ -54,7 +54,7 @@ jobs:
           runs: "3"
           compare-to: main
           upload: ${{ github.event_name == 'push' && vars.POLYGRAPH_UPLOAD == 'true' }}
-          # A self-hosted dashboard (docs/DEPLOY-FREE.md) sets these repo variables.
+          # A self-hosted dashboard (docs/DEPLOY-SERVER.md) sets these repo variables.
           api-url: ${{ vars.POLYGRAPH_API_URL || 'https://polygraphmcp.dev/api' }}
           audience: ${{ vars.POLYGRAPH_AUDIENCE }}
           comment: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}

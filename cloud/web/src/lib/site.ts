@@ -1,6 +1,6 @@
 /**
  * Site-wide settings, baked in when the image is built (most pages are prerendered). The defaults describe the
- * official deployment at polygraphmcp.dev; a self-hosted copy sets its own (see deploy/free).
+ * official deployment at polygraphmcp.dev; a self-hosted copy sets its own (see deploy/server).
  */
 export const OFFICIAL_URL = "https://polygraphmcp.dev";
 

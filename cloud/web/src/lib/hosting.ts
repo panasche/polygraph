@@ -21,6 +21,12 @@ const PROFILES: Record<string, Hosting> = {
     atRest: "with keys managed in AWS KMS",
     waf: true,
   },
+  "aws-mumbai-server": {
+    where: "Amazon Web Services' Mumbai region (ap-south-1), on a single server",
+    short: "AWS Mumbai (ap-south-1)",
+    atRest: "on encrypted disks (Amazon EBS encryption)",
+    waf: false,
+  },
   "oracle-mumbai": {
     where: "Oracle Cloud's Mumbai region (ap-mumbai-1), on a single server",
     short: "Oracle Cloud Mumbai (ap-mumbai-1)",

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Create deploy/free/.env and deploy/free/s3.json with fresh random secrets.
+# Create deploy/server/.env and deploy/server/s3.json with fresh random secrets.
 #
-#   ./deploy/free/init-env.sh
+#   ./deploy/server/init-env.sh
 #
 # Run it on the server, not on your laptop. It asks for your web address and
 # the GitHub App details, and generates every other secret itself. Secret
@@ -16,8 +16,8 @@ fail() { echo "Error: $*" >&2; exit 1; }
 
 command -v openssl >/dev/null || fail "openssl is not installed (sudo apt-get install -y openssl)."
 if [[ -e "$env_file" || -e "$s3_file" ]]; then
-  fail "deploy/free/.env or s3.json already exists. To start over, delete both AND the Docker volumes
-(./deploy/free/polygraph.sh down -v), because Postgres keeps the password it was first started with."
+  fail "deploy/server/.env or s3.json already exists. To start over, delete both AND the Docker volumes
+(./deploy/server/polygraph.sh down -v), because Postgres keeps the password it was first started with."
 fi
 
 echo "Polygraph Cloud: creating the server settings."
@@ -29,13 +29,15 @@ site="${site,,}"
   fail "\"$site\" isn't a plain host name."
 
 echo "Where does this server run?"
-echo "  1) Oracle Cloud, Mumbai"
-echo "  2) Oracle Cloud, Hyderabad"
-read -rp "Choose 1 or 2: " choice
+echo "  1) AWS, Mumbai (ap-south-1)"
+echo "  2) Oracle Cloud, Mumbai"
+echo "  3) Oracle Cloud, Hyderabad"
+read -rp "Choose 1, 2 or 3: " choice
 case "$choice" in
-  1) hosting=oracle-mumbai ;;
-  2) hosting=oracle-hyderabad ;;
-  *) fail "choose 1 or 2." ;;
+  1) hosting=aws-mumbai-server ;;
+  2) hosting=oracle-mumbai ;;
+  3) hosting=oracle-hyderabad ;;
+  *) fail "choose 1, 2 or 3." ;;
 esac
 
 echo
@@ -140,7 +142,7 @@ cat >"$s3_file" <<EOF
 EOF
 
 echo
-echo "Wrote deploy/free/.env (only you can read it) and deploy/free/s3.json."
+echo "Wrote deploy/server/.env (only you can read it) and deploy/server/s3.json."
 read -rp "Delete the private key file $pem_path now? It's copied into .env. [y/N] " del
 if [[ "${del,,}" == y* ]]; then
   if command -v shred >/dev/null; then shred -u "$pem_path"; else rm -f "$pem_path"; fi
@@ -149,4 +151,4 @@ else
   echo "Kept. Delete it yourself once the site works."
 fi
 echo
-echo "Next: ./deploy/free/polygraph.sh up -d --build"
+echo "Next: ./deploy/server/polygraph.sh up -d --build"

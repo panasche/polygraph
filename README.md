@@ -32,7 +32,7 @@ Polygraph: silent-lie 0/40 · double-action 1/40 · hijack 0/20 · coverage 18/2
 | [`cloud/web`](cloud/web) | The landing page and the dashboard (Next.js) |
 | [`action`](action) | The GitHub Action: runs the suite, comments on PRs, uploads without secrets |
 | [`infra`](infra) | Terraform for AWS Mumbai (ap-south-1) |
-| [`deploy/free`](deploy/free) | Run the whole hosted dashboard on one free server ([guide](docs/DEPLOY-FREE.md)) |
+| [`deploy/server`](deploy/server) | Run the whole hosted dashboard on one small server ([guide](docs/DEPLOY-SERVER.md)) |
 | [`benchmark`](benchmark) | The cross-framework benchmark: tasks, adapters, predictions |
 | [`docs/CONTRACTS.md`](docs/CONTRACTS.md) | The one source of truth every part builds against: results file, Python API, CLI, HTTP API |
 
@@ -76,8 +76,8 @@ With Docker: `cp .env.example .env && docker compose up --build`.
 
 ## Deploy
 
-- **Free, on one server:** [docs/DEPLOY-FREE.md](docs/DEPLOY-FREE.md) puts everything on an Always Free Oracle Cloud
-  server with a free HTTPS address. No domain needed.
+- **On one server:** [docs/DEPLOY-SERVER.md](docs/DEPLOY-SERVER.md) puts everything on one small EC2 instance (or an
+  Oracle Cloud server) with a free HTTPS address. No domain needed, and the AWS bill stays small.
 - **Full AWS setup:** [docs/DEPLOY.md](docs/DEPLOY.md) and [infra/](infra).
 
 ## Privacy and safety
@@ -86,7 +86,7 @@ With Docker: `cp .env.example .env && docker compose up --build`.
 - An upload carries numbers, outcome buckets, tool and fault names, timings and **hashes** of payloads, not
   the text. Text upload is a per-project opt-in; your `mask` runs first and fails closed, and the server
   rejects anything that still looks like personal data (emails, phone numbers, PAN, Aadhaar).
-- Hosted data stays in AWS Mumbai, encrypted with TLS and KMS. Account data is only your GitHub id,
+- Hosted data stays in India, encrypted in transit and at rest. Account data is only your GitHub id,
   username and avatar. Delete or export anything, any time.
 - All injected text is harmless and fake, fake addresses use `example.test`, and the fake worlds never
   touch the network.
